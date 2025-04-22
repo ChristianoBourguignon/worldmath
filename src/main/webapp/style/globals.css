@@ -1,0 +1,90 @@
+/* Estilos da navbar */
+.navbar {
+    background: white;
+    padding: 10px 20px;
+    margin: 10px;
+    display: block;
+    border-radius: 20px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.navbar .container-fluid {
+    display: flex;
+    align-items: center;
+}
+
+.world {
+    font-weight: bold;
+    color: #60db2f;
+    font-size: 24px;
+}
+
+.math {
+    font-weight: bold;
+    color: #96079b;
+    font-size: 24px;
+}
+
+.navbar-brand {
+    color: inherit !important;
+    font-size: 24px;
+}
+
+.navbar-toggler {
+    border: none;
+    font-size: 1.25rem;
+}
+
+.btn-close {
+    color: black;
+}
+
+.navbar-toggler:focus,
+.btn-close:focus {
+    box-shadow: none;
+    outline: none;
+}
+
+.nav-link {
+    color: rgba(12, 12, 14, 0.467);
+    font-weight: 500;
+    position: relative;
+}
+
+.nav-link:hover,
+.nav-link:active {
+    color: inherit;
+}
+
+@media (min-width: 990px) {
+    .nav-link::before {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 2px;
+        background-color: #96079b;
+        visibility: hidden;
+        transition: 0.3s ease-in-out;
+    }
+
+    .nav-link:hover::before,
+    .nav-link.active::before {
+        width: 100%;
+        visibility: visible;
+    }
+}
+
+/* Corpo da página */
+body {
+    font-family: 'Montserrat', sans-serif;
+    background-color: #f8f9fa;
+    margin: 0;
+}
+
+/* Espaçamento para evitar sobreposição da navbar */
+.corpo {
+    padding-top: 14vh;
+}
