@@ -2,61 +2,111 @@
 <html lang="pt-br">
 <head>
     <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EcoEscambo</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Montserrat -->
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&display=swap" rel="stylesheet">
-    <!-- CSS global -->
-    <link rel="stylesheet" href="style/globals.css">
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Cadastro de Matrizes</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg fixed-top">
-        <div class="container-fluid">
-            <!-- Logo -->
-            <a class="navbar-brand me-auto" href="index.php">
-                <span class="world">World</span><span class="math">Math</span>
-            </a>
+<div class="container py-5">
+    <h1 class="mb-4">Cadastro de Matrizes</h1>
 
-            <!-- Botão hamburguer (só aparece no mobile) -->
-            <button class="navbar-toggler d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-
-            <!-- Itens centralizados no desktop -->
-                <div class="collapse navbar-collapse justify-content-center">
-                    <ul class="navbar-nav">
-                        <li class="nav-item"><a class="nav-link" href="#">Início</a></li>
-                        <li class="nav-item"><a class="nav-link" href="#">Produtos</a></li>
-                        <li class="nav-item"><a class="nav-link" href="#">Sobre nós</a></li>
-                    </ul>
-                </div>
+    <!-- Formulário -->
+    <form id="matrixForm" action="#" th:action="@{/matrizes}" th:object="${main}" class="mb-5">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label for="matrixName" class="form-label">Nome da Matriz</label>
+                <input type="text" class="form-control" id="matrixName" name="matrizName" required>
             </div>
-            <!-- Offcanvas (menu mobile) -->
-            <div class="offcanvas offcanvas-end d-lg-none" tabindex="-1" id="offcanvasNavbar">
-                <div class="offcanvas-header">
-                    <h5 class="offcanvas-title">
-                        <span class="world">World</span><span class="math">Math</span>
-                    </h5>
-                    <button type="button" class="btn-close btn-close-dark" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-                </div>
-                <div class="offcanvas-body">
-                    <div class="list-group">
-                        <div class="list-group-item disabled">Páginas</div>
-                        <a class="list-group-item list-group-item-action" href="#">Início</a>
-                        <a class="list-group-item list-group-item-action" href="#">Produtos</a>
-                        <a class="list-group-item list-group-item-action" href="#">Sobre nós</a>
-                    </div>
-                </div>
+            <div class="col-md-4">
+                <label for="matrixRows" class="form-label">Número de Linhas</label>
+                <input type="number" class="form-control" id="matrixRows" name="matrizRows" min="1" required>
+            </div>
+            <div class="col-md-4">
+                <label for="matrixCols" class="form-label">Número de Colunas</label>
+                <input type="number" class="form-control" id="matrixCols" name="matrizCols" min="1" required>
             </div>
         </div>
-    </nav>
-    <div class="container-fluid corpo">
-        <h1>Hello World!</h1>
-    </div>
+        <div class="mt-4">
+            <button type="submit" class="btn btn-primary">Cadastrar Matriz</button>
+        </div>
+    </form>
 
+    <!-- Área para exibir as matrizes -->
+    <div id="matricesDisplay">
+        <h2 class="mb-3">Matrizes Cadastradas</h2>
+        <div id="matricesList" class="row gy-3">
+            <!-- Matrizes serão inseridas aqui futuramente -->
+        </div>
+    </div>
+</div>
+<script>
+    document.getElementById("matrixForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        let name = document.getElementById("matrixName").value.trim();
+        let rows = document.getElementById("matrixRows").value.trim();
+        let cols = document.getElementById("matrixCols").value.trim();
+
+        const integerRegex = /^[1-9]\d*$/; // Aceita apenas inteiros positivos
+
+        if (!name) {
+            alert("Por favor, insira o nome da matriz.");
+            return;
+        }
+
+        if (!integerRegex.test(rows)) {
+            alert("Número de linhas deve ser um número inteiro positivo, sem pontos ou símbolos.");
+            return;
+        }
+
+        if (!integerRegex.test(cols)) {
+            alert("Número de colunas deve ser um número inteiro positivo, sem pontos ou símbolos.");
+            return;
+        }
+
+        // Exemplo de confirmação (você pode substituir por outra lógica)
+        console.log(name);
+        console.log(rows);
+        console.log(cols);
+        alert(`Matriz: ${name} com ${rows} linhas e ${cols} colunas cadastrada!`);
+
+        // Aqui você pode adicionar a lógica para criar a matriz e exibi-la
+    });
+
+    // Evita digitação de caracteres inválidos nos inputs de linhas e colunas
+    ["matrixRows", "matrixCols"].forEach(id => {
+        document.getElementById(id).addEventListener("input", function (e) {
+            this.value = this.value.replace(/[^0-9]/g, ''); // Remove tudo que não for dígito
+        });
+    });
+
+    function carregarMatrizesDoServidor() {
+        fetch('/matrizes')
+            .then(response => response.json())
+            .then(data => {
+                const container = document.getElementById("matricesList");
+                container.innerHTML = "";
+                data.forEach(matriz => {
+                    const div = document.createElement("div");
+                    div.classList.add("col-md-4");
+                    div.innerHTML = `
+                    <div class="card p-3">
+                        <h5>${matriz.nome}</h5>
+                        <p>${matriz.linhas} x ${matriz.colunas}</p>
+                    </div>
+                `;
+                    container.appendChild(div);
+                });
+            });
+    }
+
+    // Chame após criação da matriz:
+    carregarMatrizesDoServidor();
+
+</script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
