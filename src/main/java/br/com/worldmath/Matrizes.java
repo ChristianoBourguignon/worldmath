@@ -42,6 +42,9 @@ public class Matrizes {
     public void setValores(int[][] valores) {
         this.valores = valores;
     }
+    public int[][] getValores() {
+        return this.valores;
+    }
 
     public void setValor(int linha, int coluna, int valor) {
         if (valor >= 0) {

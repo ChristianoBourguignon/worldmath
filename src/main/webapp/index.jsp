@@ -12,23 +12,23 @@
     <h1 class="mb-4">Cadastro de Matrizes</h1>
 
     <!-- Formulário -->
-    <form id="matrixForm" action="#" th:action="@{/matrizes}" th:object="${main}" class="mb-5">
+    <form id="matrizForm" method="POST" class="mb-5">
         <div class="row g-3">
             <div class="col-md-4">
-                <label for="matrixName" class="form-label">Nome da Matriz</label>
-                <input type="text" class="form-control" id="matrixName" name="matrizName" required>
+                <label for="matrizName" class="form-label">Nome da Matriz</label>
+                <input type="text" class="form-control" id="matrizName" name="matrizName" required>
             </div>
             <div class="col-md-4">
-                <label for="matrixRows" class="form-label">Número de Linhas</label>
-                <input type="number" class="form-control" id="matrixRows" name="matrizRows" min="1" required>
+                <label for="matrizRows" class="form-label">Número de Linhas</label>
+                <input type="number" class="form-control" id="matrizRows" name="matrizRows" min="1" required>
             </div>
             <div class="col-md-4">
-                <label for="matrixCols" class="form-label">Número de Colunas</label>
-                <input type="number" class="form-control" id="matrixCols" name="matrizCols" min="1" required>
+                <label for="matrizCols" class="form-label">Número de Colunas</label>
+                <input type="number" class="form-control" id="matrizCols" name="matrizCols" min="1" required>
             </div>
         </div>
         <div class="mt-4">
-            <button type="submit" class="btn btn-primary">Cadastrar Matriz</button>
+            <button type="submit" class="btn btn-primary">Inserir Matriz</button>
         </div>
     </form>
 
@@ -41,15 +41,17 @@
     </div>
 </div>
 <script>
-    document.getElementById("matrixForm").addEventListener("submit", function (e) {
-        e.preventDefault();
+    document.getElementById("matrizForm").addEventListener("submit", function (e) {
+        e.preventDefault(); // Impede o comportamento padrão do formulário (redirecionamento)
 
-        let name = document.getElementById("matrixName").value.trim();
-        let rows = document.getElementById("matrixRows").value.trim();
-        let cols = document.getElementById("matrixCols").value.trim();
+        // Captura os valores dos inputs
+        const name = document.getElementById("matrizName").value.trim();
+        const rows = document.getElementById("matrizRows").value.trim();
+        const cols = document.getElementById("matrizCols").value.trim();
 
         const integerRegex = /^[1-9]\d*$/; // Aceita apenas inteiros positivos
 
+        // Validações
         if (!name) {
             alert("Por favor, insira o nome da matriz.");
             return;
@@ -65,24 +67,69 @@
             return;
         }
 
-        // Exemplo de confirmação (você pode substituir por outra lógica)
-        console.log(name);
-        console.log(rows);
-        console.log(cols);
-        alert(`Matriz: ${name} com ${rows} linhas e ${cols} colunas cadastrada!`);
+        // Envia os dados para o backend usando fetch
+        fetch("${pageContext.request.contextPath}/matrizes", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                matrizName: name,
+                matrizRows: parseInt(rows),
+                matrizCols: parseInt(cols)
+            })
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Erro ao enviar os dados.");
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log("Matrizes recebidas:", data);
+                alert(`Matriz ${name} com ${rows} linhas e ${cols} colunas cadastrada!`);
 
-        // Aqui você pode adicionar a lógica para criar a matriz e exibi-la
+                // Atualiza a lista de matrizes no front
+                const container = document.getElementById("matricesList");
+                container.innerHTML = ""; // Limpa a lista atual
+                data.forEach(matriz => {
+                    const div = document.createElement("div");
+                    div.classList.add("col-md-4");
+                    div.innerHTML = `
+                    <div class="card p-3">
+                        <h5>${data->nome}</h5>
+                        <p>${data->linhas} x ${data->colunas}</p>
+                    </div>
+                `;
+                    container.appendChild(div);
+                });
+
+                // Limpa os campos do formulário
+                document.getElementById("matrizName").value = "";
+                document.getElementById("matrizRows").value = "";
+                document.getElementById("matrizCols").value = "";
+            })
+            .catch(err => {
+                console.error("Erro ao carregar matrizes:", err);
+                alert(`Ocorreu um erro ao inserir a matriz`);
+            });
     });
 
     // Evita digitação de caracteres inválidos nos inputs de linhas e colunas
-    ["matrixRows", "matrixCols"].forEach(id => {
+    ["matrizRows", "matrizCols"].forEach(id => {
         document.getElementById(id).addEventListener("input", function (e) {
-            this.value = this.value.replace(/[^0-9]/g, ''); // Remove tudo que não for dígito
+            this.value = this.value.replace(/[^0-9]/g, ""); // Remove tudo que não for dígito
         });
     });
 
+    // Função para carregar as matrizes ao carregar a página
     function carregarMatrizesDoServidor() {
-        fetch('/matrizes')
+        fetch("${pageContext.request.contextPath}/matrizes", {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json"
+            }
+        })
             .then(response => response.json())
             .then(data => {
                 const container = document.getElementById("matricesList");
@@ -93,17 +140,17 @@
                     div.innerHTML = `
                     <div class="card p-3">
                         <h5>${matriz.nome}</h5>
-                        <p>${matriz.linhas} x ${matriz.colunas}</p>
+                        <p>${matriz.linha || matriz.linhas} x ${matriz.coluna || matriz.colunas}</p>
                     </div>
                 `;
                     container.appendChild(div);
                 });
-            });
+            })
+            .catch(err => console.error("Erro ao carregar matrizes:", err));
     }
 
-    // Chame após criação da matriz:
+    // Chama a função ao carregar a página
     carregarMatrizesDoServidor();
-
 </script>
 
 
