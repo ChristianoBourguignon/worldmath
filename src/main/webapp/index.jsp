@@ -26,17 +26,20 @@
                 <label for="matrixCols" class="form-label">Número de Colunas</label>
                 <input type="number" class="form-control" id="matrixCols" name="matrizCols" min="1" required>
             </div>
+            <div class="mb-3">
+                <label for="matrixValues" class="form-label">Valores da Matriz</label>
+                <textarea class="form-control" id="matrixValues" name="matrixValues" rows="5" placeholder="Digite os valores da matriz, cada linha separada por quebra de linha, e os valores separados por espaço. Exemplo:&#10;1 2 3&#10;4 5 6&#10;7 8 9"></textarea>
+            </div>
         </div>
         <div class="mt-4">
             <button type="submit" class="btn btn-primary">Cadastrar Matriz</button>
         </div>
     </form>
 
-    <!-- Área para exibir as matrizes -->
     <div id="matricesDisplay">
         <h2 class="mb-3">Matrizes Cadastradas</h2>
         <div id="matricesList" class="row gy-3">
-            <!-- Matrizes serão inseridas aqui futuramente -->
+
         </div>
     </div>
 </div>
@@ -47,8 +50,9 @@
         let name = document.getElementById("matrixName").value.trim();
         let rows = document.getElementById("matrixRows").value.trim();
         let cols = document.getElementById("matrixCols").value.trim();
+        let values = document.getElementById("matrixValues").value.trim();
 
-        const integerRegex = /^[1-9]\d*$/; // Aceita apenas inteiros positivos
+        const integerRegex = /^[1-9]\d*$/;
 
         if (!name) {
             alert("Por favor, insira o nome da matriz.");
@@ -56,54 +60,118 @@
         }
 
         if (!integerRegex.test(rows)) {
-            alert("Número de linhas deve ser um número inteiro positivo, sem pontos ou símbolos.");
+            alert("Número de linhas deve ser um número inteiro positivo.");
             return;
         }
 
         if (!integerRegex.test(cols)) {
-            alert("Número de colunas deve ser um número inteiro positivo, sem pontos ou símbolos.");
+            alert("Número de colunas deve ser um número inteiro positivo.");
             return;
         }
 
-        // Exemplo de confirmação (você pode substituir por outra lógica)
-        console.log(name);
-        console.log(rows);
-        console.log(cols);
-        alert(`Matriz: ${name} com ${rows} linhas e ${cols} colunas cadastrada!`);
+        console.log("Enviando POST para /matrizes com:", { matrixName: name, matrixRows: rows, matrixCols: cols, matrixValues: values });
 
-        // Aqui você pode adicionar a lógica para criar a matriz e exibi-la
+        fetch('/matrizes', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+                matrixName: name,
+                matrixRows: rows,
+                matrixCols: cols,
+                matrixValues: values
+            })
+        })
+            .then(response => {
+                console.log("Resposta do POST:", response.status, response.statusText);
+                if (!response.ok) {
+                    throw new Error('Erro na requisição POST: ' + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log("Dados recebidos do POST:", data);
+                if (data.status === 'ok') {
+                    alert('Matriz cadastrada com sucesso!');
+                    document.getElementById("matrixForm").reset();
+                    carregarMatrizesDoServidor();
+                } else {
+                    alert('Erro ao cadastrar matriz: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Erro no POST:', error);
+                alert('Ocorreu um erro ao cadastrar a matriz: ' + error.message);
+            });
     });
 
-    // Evita digitação de caracteres inválidos nos inputs de linhas e colunas
     ["matrixRows", "matrixCols"].forEach(id => {
         document.getElementById(id).addEventListener("input", function (e) {
-            this.value = this.value.replace(/[^0-9]/g, ''); // Remove tudo que não for dígito
+            this.value = this.value.replace(/[^0-9]/g, '');
         });
     });
 
     function carregarMatrizesDoServidor() {
+        console.log("Enviando GET para /matrizes");
         fetch('/matrizes')
-            .then(response => response.json())
+            .then(response => {
+                console.log("Resposta do GET:", response.status, response.statusText);
+                if (!response.ok) {
+                    throw new Error('Erro na requisição GET: ' + response.status);
+                }
+                return response.json();
+            })
             .then(data => {
+                console.log('Matrizes recebidas (antes de renderizar):', data);
                 const container = document.getElementById("matricesList");
+                if (!container) {
+                    console.error("Elemento matricesList não encontrado no DOM!");
+                    alert("Erro: Elemento de exibição das matrizes não encontrado.");
+                    return;
+                }
                 container.innerHTML = "";
-                data.forEach(matriz => {
+                if (!data || data.length === 0) {
+                    container.innerHTML = "<p>Nenhuma matriz cadastrada.</p>";
+                    return;
+                }
+                data.forEach((matriz, index) => {
+                    console.log(`Renderizando matriz ${index}:`, matriz);
+                    let tableHTML = '<table class="table"><tbody>';
+                    try {
+                        matriz.valores.forEach(row => {
+                            tableHTML += '<tr>';
+                            row.forEach(val => {
+                                tableHTML += '<td>' + (val !== undefined ? val : 'N/A') + '</td>';
+                            });
+                            tableHTML += '</tr>';
+                            console.log(`Linha adicionada ao tableHTML:`, tableHTML);
+                        });
+                    } catch (e) {
+                        console.error(`Erro ao construir tabela para matriz ${matriz.nome}:`, e);
+                        tableHTML = '<p>Erro ao carregar valores da matriz.</p>';
+                    }
+                    tableHTML += '</tbody></table>';
+                    console.log(`tableHTML completo para matriz ${index}:`, tableHTML);
+
                     const div = document.createElement("div");
-                    div.classList.add("col-md-4");
-                    div.innerHTML = `
-                    <div class="card p-3">
-                        <h5>${matriz.nome}</h5>
-                        <p>${matriz.linhas} x ${matriz.colunas}</p>
-                    </div>
-                `;
+                    div.classList.add("col-md-4", "mb-3");
+                    div.innerHTML = '<div class="card p-3">' +
+                        '<h5>' + matriz.nome + ' (' + matriz.linha + 'x' + matriz.coluna + ')</h5>' +
+                        tableHTML +
+                        '</div>';
+                    console.log(`Div a ser adicionada ao DOM:`, div.outerHTML);
                     container.appendChild(div);
+                    console.log(`Conteúdo de matricesList após adicionar div:`, container.innerHTML);
                 });
+            })
+            .catch(error => {
+                console.error('Erro ao carregar matrizes:', error);
+                alert('Não foi possível carregar as matrizes: ' + error.message);
             });
     }
 
-    // Chame após criação da matriz:
     carregarMatrizesDoServidor();
-
 </script>
 
 
